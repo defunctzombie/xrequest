@@ -4,6 +4,7 @@ var global = require('global');
 // Obfuscated key for Blue Coat.
 var k_xobject = global[['Active'].concat('Object').join('X')];
 
+// support for XMLHttpRequest2 objects with proper CORS features
 // https://github.com/Modernizr/Modernizr/blob/master/feature-detects/cors.js
 var k_hasCors = 'XMLHttpRequest' in global && 'withCredentials' in new global.XMLHttpRequest();
 
@@ -27,6 +28,16 @@ var create = function(xdomain) {
   }
 };
 
+// detect if cross domain or not
+var isXD = function(uri) {
+  var location = global.location;
+  var a =  document.createElement('a');
+  a.href = uri;
+
+  return (a.protocol !== location.protocol || a.hostname !== location.hostname ||
+      a.port !== location.port);
+}
+
 /**
  * Request constructor
  *
@@ -35,29 +46,16 @@ var create = function(xdomain) {
  */
 
 function Request(opts) {
-
-  var location = global.location;
-  /*
-  if (location) {
-    var isSSL = ('https:' == location.protocol);
-    var port = location.port;
-
-    // some user agents have empty `location.port`
-    if (Number(port) !== port) {
-      port = isSSL ? 443 : 80;
-    }
-
-    this.xd = (opts.hostname != location.hostname || port != opts.port);
-  }
-  */
+  var self = this;
 
   // figure out if request needs to be xdomain
-  this.method = opts.method || 'GET';
-  this.uri = opts.uri;
-  this.xd = !!opts.xd;
-  this.async = false !== opts.async;
-  this.data = undefined != opts.data ? opts.data : null;
-  this.create();
+  self.method = opts.method || 'GET';
+  self.uri = opts.uri;
+  self.xd = !!opts.xd || isXD(self.uri);
+  self.async = false !== opts.async;
+  self.withCredentials = !!opts.withCredentials;
+  self.data = undefined != opts.data ? opts.data : null;
+  self.create();
 }
 
 Emitter(Request.prototype);
@@ -69,12 +67,12 @@ Emitter(Request.prototype);
  */
 
 Request.prototype.create = function() {
-  var xhr = create(this.xd);
   var self = this;
+  var xhr = create(self.xd);
 
-  xhr.open(this.method, this.uri, this.async);
+  xhr.open(self.method, self.uri, self.async);
 
-  if ('POST' == this.method) {
+  if ('POST' == self.method) {
     try {
       if (xhr.setRequestHeader) {
         // xmlhttprequest
@@ -86,7 +84,7 @@ Request.prototype.create = function() {
     } catch (e) {}
   }
 
-  if (this.xd && global.XDomainRequest && xhr instanceof XDomainRequest) {
+  if (self.xd && global.XDomainRequest && xhr instanceof XDomainRequest) {
     xhr.onerror = function(e){
       self.onError(e);
     };
@@ -97,7 +95,7 @@ Request.prototype.create = function() {
   } else {
     // ie6 check
     if ('withCredentials' in xhr) {
-      xhr.withCredentials = true;
+      xhr.withCredentials = self.withCredentials;
     }
 
     xhr.onreadystatechange = function(){
@@ -120,11 +118,11 @@ Request.prototype.create = function() {
     };
   }
 
-  xhr.send(this.data);
+  xhr.send(self.data);
 
   if (k_xobject) {
-    this.index = Request.requestsCount++;
-    Request.requests[this.index] = this;
+    self.index = Request.requestsCount++;
+    Request.requests[self.index] = self;
   }
 };
 
