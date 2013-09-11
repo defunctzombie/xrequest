@@ -1,0 +1,33 @@
+{
+    "name": "xrequest",
+    "version": "0.0.0",
+    "description": "",
+    "main": "request.js",
+    "contributors": [
+        { "name": "Guillermo Rauch", "email": "rauchg@gmail.com" }
+    ],
+    "browser": {
+        "emitter": "emitter-component"
+    },
+    "dependencies": {
+        "emitter-component": "1.0.1",
+        "global": "component/global#2.0.1"
+    },
+    "devDependencies": {
+        "mocha": "1.12.1"
+    },
+    "testling" : {
+        "files": "test/browser.js",
+        "server": "test/server.js",
+        "browsers": [
+            "ie/6..latest",
+            "chrome/4..latest",
+            "firefox/3.6..latest",
+            "safari/5.0.5..latest",
+            "iphone/6.0..latest",
+            "ipad/6.0..latest",
+            "android/latest"
+        ],
+        "harness": "mocha-tdd"
+    }
+}
