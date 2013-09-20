@@ -2,27 +2,37 @@ var assert = require('assert');
 
 var Request = require('../');
 
-var cors_port = 0;
-
 test('simple', function(done) {
     var req = new Request({
         uri: '/foobar'
     });
 
     req.once('data', function(data) {
-        cors_port = data;
-        assert.ok(!isNaN(cors_port - 0));
+        assert.equal(data, 'hello');
         done();
     });
 });
 
+// cors
+
+var host = window.location.hostname;
+var cors_host = 'ci.testling.com';
+
+if (host === 'localhost') {
+    cors_host = 'test.localhost';
+}
+
+if (window.location.port) {
+    cors_host += ':' + window.location.port;
+}
+
 test('cors', function(done) {
     var req = new Request({
-        uri: '//localhost:' + cors_port + '/foobar'
+        uri: '//' + cors_host + '/foobar'
     });
 
     req.once('data', function(data) {
-        assert.equal(data, 'foobar');
+        assert.equal(data, 'hello');
         done();
     });
 });
