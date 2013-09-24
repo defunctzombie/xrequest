@@ -1,9 +1,6 @@
 var Emitter = require('emitter');
 var global = require('global');
 
-// Obfuscated key for Blue Coat.
-var k_xobject = global[['Active'].concat('Object').join('X')];
-
 // support for XMLHttpRequest2 objects with proper CORS features
 // https://github.com/Modernizr/Modernizr/blob/master/feature-detects/cors.js
 var k_hasCors = 'XMLHttpRequest' in global && 'withCredentials' in new global.XMLHttpRequest();
@@ -21,11 +18,7 @@ var create = function(xdomain) {
     }
   } catch (e) { }
 
-  if (!xdomain) {
-    try {
-      return new ActiveXObject('Microsoft.XMLHTTP');
-    } catch(e) { }
-  }
+  throw new Error('cannot create XMLHttpRequest object');
 };
 
 // detect if cross domain or not
@@ -119,11 +112,6 @@ Request.prototype.create = function() {
   }
 
   xhr.send(self.data);
-
-  if (k_xobject) {
-    self.index = Request.requestsCount++;
-    Request.requests[self.index] = self;
-  }
 };
 
 /**
@@ -179,10 +167,6 @@ Request.prototype.cleanup = function(){
     this.xhr.abort();
   } catch(e) {}
 
-  if (k_xobject) {
-    delete Request.requests[this.index];
-  }
-
   this.xhr = null;
 };
 
@@ -195,18 +179,5 @@ Request.prototype.cleanup = function(){
 Request.prototype.abort = function(){
   this.cleanup();
 };
-
-if (k_xobject) {
-  Request.requestsCount = 0;
-  Request.requests = {};
-
-  global.attachEvent('onunload', function(){
-    for (var i in Request.requests) {
-      if (Request.requests.hasOwnProperty(i)) {
-        Request.requests[i].abort();
-      }
-    }
-  });
-}
 
 module.exports = Request;
